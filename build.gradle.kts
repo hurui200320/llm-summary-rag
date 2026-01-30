@@ -14,6 +14,16 @@ dependencies {
     implementation("dev.langchain4j:langchain4j-google-ai-gemini:1.10.0")
     implementation("dev.langchain4j:langchain4j-open-ai:1.10.0")
     implementation("dev.langchain4j:langchain4j:1.10.0")
+
+    implementation("org.ktorm:ktorm-core:4.1.1")
+    implementation("org.postgresql:postgresql:42.7.9")
+    implementation("com.pgvector:pgvector:0.1.6")
+
+    // https://github.com/haifengl/smile
+    implementation("com.github.haifengl:smile-kotlin:5.1.0")
+
+    implementation("com.google.genai:google-genai:1.36.0")
+
     testImplementation(kotlin("test"))
 }
 

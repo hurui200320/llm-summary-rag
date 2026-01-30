@@ -32,24 +32,7 @@ Thus, each branch represents a different trial.
 The master branch is the most promising one which I'm continuing moving forward.
 All other branches are just failed attempts.
 
-## Trial: text splitting by LLM
-
-This trial tried to split the content into chunks by LLM.
-Basically, it asks the LLM to decide where is the good place to cut the text within the limit of the chunk size.
-
-However, asking LLM to output the whole chunk is basically asking it to repeat the whole book.
-So it's not a good idea. Instead, we ask it to only output the tail, and we search for the index and make the cut.
-
-Issues:
-
-+ When testing with *Bloom Into You: Regarding Saeki Sayaka*, GCP's API blocked content and didn't tell me why.
-  + The OpenRouter API doesn't, but the gemini-3-falsh model feels like a idiot and always failed to follow the system instruction
-  + The gemini-3-pro over OpenRouter is fine, but it's too slow with low reasoning effort and is too expensive.
-
-Need to find a cheaper way to do that. Gemini has a batch API, which takes at most 24 hour to process,
-but the price is 50% of the normal price.
-
-However, the current process relies on previous output, so it doesn't really work for batch.
+## Trial: hard cut with context summarization
 
 Maybe we can do hard cut slicing but skip the chunking part and directly ask AI to summarize?
 
@@ -78,4 +61,16 @@ Content of D here...
 -----END NEXT BLOCK-----
 ```
 
-TODO: test how LLM behaves with this approach. If it works good, we can slice the text
+Test using Gemini 3 flash works, but a lot of content has been blocked due to PROHIBITED CONTENT. In total, 14 out of 101 chunks failed to summary.
+
+Rollback to Gemini 2.5 flash. 9 out of 101 chunks failed to summary, but the quality of the summary is significantly worse.
+
+Trying Gemini 3 pro，11 out of 101 chunks failed to summary. The quality has not improved much.
+
+Tried GPT-5.1, which is all good. The GPT 5.2 improves tool calling and agentic tool,
+which is not useful here, so just using 5.1 to save some money.
+
+For RAG, since the raw texts are hard cut, so there is no point to do RAG.
+However, we do want to do RAG for both chunk summary and book summary,
+providing tools to search RAG and return both matched books and chunks.
+Also providing search text using something like Apache Lucene.
