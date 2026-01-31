@@ -12,7 +12,7 @@ import org.ktorm.entity.*
 import java.util.concurrent.CompletableFuture
 
 
-private const val summaryLength = 200
+private const val summaryLength = 500
 private val backend = OpenAiChatModel.builder()
     .apiKey(openaiApiKey)
     .baseUrl("https://openrouter.ai/api/v1")
@@ -46,6 +46,7 @@ fun main() {
                 println(resp.finishReason())
                 require(resp.finishReason() == FinishReason.STOP)
                 println(resp.aiMessage().text())
+                println(resp.aiMessage().text().length)
                 println()
                 chunk.summary = resp.aiMessage().text()
                 chunk.flushChanges()

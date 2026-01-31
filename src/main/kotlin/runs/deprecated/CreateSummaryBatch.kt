@@ -1,4 +1,4 @@
-package info.skyblond.runs
+package info.skyblond.runs.deprecated
 
 import dev.langchain4j.model.googleai.BatchRequestResponse.*
 import info.skyblond.Gemini3

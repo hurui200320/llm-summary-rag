@@ -86,5 +86,20 @@ Tools:
 + List chunks (docId) - chunk index, chunk summary
 + Search doc summaries RAG - return matched docs id and their summary
 + Search chunk summaries RAG - return matched (docId, chunkIndex) and their summary
-+ Search text - return matched (docId, chunkIndex)
++ Search text (any or all) - return matched (docId, chunkIndex)
 + Read chunk (docId, chunk Index)
+
+Tweaked the parameter:
++ Considering each summary will be a RAG vector, thus setting the chunk summary to 500 chars.
++ The book summary is still 1000 chars.
++ To support the 500 chars summary, each chunk is now 1500 chars, with 500 chars of pre content and 500 chars of post content.
+
+After this tweaking, the summary makes more sense and looks more meaningful.
+
+General steps on ingesting a book:
+1. create an entry in the database, in the document table
+2. Slice the book into chunks
+3. Generate summary for each chunk
+4. Generate book summary
+5. Generate RAG vectors for each chunk summary and book summary
+6. Build lucene index for searching

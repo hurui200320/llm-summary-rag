@@ -77,7 +77,7 @@ fun createChunkSummarySystemPrompt(summaryLength: Int) = """
     |- **严格性**：绝对不要将 <pre_context> 或 <post_context> 里的独立情节写入摘要。摘要必须严格限制在目标块的时间范围内。
     |- **准确性**：保留关键的人名、地名和特定道具名称，不要使用模糊的代词（如“有人”或“他”）。
     |- **客观性**：直接陈述事实，不要添加“这段文字描述了”、“作者写道”等元描述。
-    |- **长度**：将摘要控制在 $summaryLength 字左右（或根据你的具体需求调整，浮动不超过50字）。
+    |- **长度**：将摘要控制在 $summaryLength 字以内，在不超出长度的前提下尽量保留细节。
     |
     |# Output Format
     |直接输出摘要内容，不要包含任何 XML 标签、Markdown 标题或开场白。

@@ -23,9 +23,9 @@ fun main() {
                 "終將成為妳 關於佐伯沙彌香 1 - 入間 人間.txt"
     ).readText()
 
-    val blockSize = 800
+    val blockSize = 1500
     val preContentSize = 500
-    val postContentSize = 200
+    val postContentSize = 500
 
     source.chunkedSequence(blockSize).forEachIndexed { index, content ->
         val startPos = index * blockSize

@@ -1,6 +1,7 @@
-package info.skyblond.runs
+package info.skyblond.runs.deprecated
 
 import com.google.genai.Client
+import com.google.genai.types.FinishReason
 import com.google.genai.types.GetBatchJobConfig
 import info.skyblond.database
 import info.skyblond.db.Chunks
@@ -27,7 +28,7 @@ fun main() {
     batchJob.dest().get().inlinedResponses().get().forEachIndexed { index, response ->
         val indexOfDoc = index + 1
         val resp = response.response().get()
-        if (resp.finishReason().knownEnum() != com.google.genai.types.FinishReason.Known.STOP) {
+        if (resp.finishReason().knownEnum() != FinishReason.Known.STOP) {
             failedCount++
             return@forEachIndexed
         }
