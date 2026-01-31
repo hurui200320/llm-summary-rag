@@ -39,7 +39,10 @@ fun main() {
         }
         .build()
 
-    val response = chatAgent.chat("请问佐伯沙弥香中学时期是因为什么原因才有了自己的手机？")
+    val response = chatAgent.chat("""
+        |请以佐伯沙弥香初中时与柚木学姐的恋爱经历为基础，总结出她们情感关系中出现问题或导致分手的原因。
+        |然后请分析佐伯沙弥香和七海灯子的情感关系中，与前一段的差异，并分析为什么七海灯子最终没能接受佐伯沙弥香的告白。
+    """.trimMargin())
     println(response)
 }
 

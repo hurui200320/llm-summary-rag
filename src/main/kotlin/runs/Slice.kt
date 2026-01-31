@@ -16,11 +16,12 @@ import java.io.File
  * Only need to run once.
  * */
 fun main() {
-    val document = database.sequenceOf(Documents).find { it.id eq 1 }!!
+    // TODO: Check id before running
+    val document = database.sequenceOf(Documents).find { it.id eq 2 }!!
 
     val source = File(
         "/run/user/1000/gvfs/smb-share:server=100.99.241.120,share=data/txt/" +
-                "終將成為妳 關於佐伯沙彌香 1 - 入間 人間.txt"
+                "終將成為妳 關於佐伯沙彌香 2 - 入間 人間, 仲谷 鳰.txt"
     ).readText()
 
     val blockSize = 1500

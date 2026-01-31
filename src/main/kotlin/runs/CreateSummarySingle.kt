@@ -27,8 +27,8 @@ private val backend = OpenAiChatModel.builder()
  * This run will gather chunks with empty summary and use regular API to process it.
  * */
 fun main() {
-    // 終將成為妳 關於佐伯沙彌香 1
-    val document = database.sequenceOf(Documents).find { it.id eq 1 }!!
+    // TODO: Check id before running
+    val document = database.sequenceOf(Documents).find { it.id eq 2 }!!
 
     val chunks = database.sequenceOf(Chunks)
         .filter { it.documentId eq document.id }

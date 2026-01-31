@@ -30,8 +30,8 @@ private val backend by lazy {
  * Create book summary.
  * */
 fun main() {
-    // 終將成為妳 關於佐伯沙彌香 1
-    val document = database.sequenceOf(Documents).find { it.id eq 1 }!!
+    // TODO: Check id before running
+    val document = database.sequenceOf(Documents).find { it.id eq 2 }!!
     val chunks = database.sequenceOf(Chunks)
         .filter { it.documentId eq document.id }
         .sortedBy { it.indexOfDoc }
