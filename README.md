@@ -74,3 +74,13 @@ For RAG, since the raw texts are hard cut, so there is no point to do RAG.
 However, we do want to do RAG for both chunk summary and book summary,
 providing tools to search RAG and return both matched books and chunks.
 Also providing search text using something like Apache Lucene.
+
+Re rank?
+
+Tools:
++ List docs (id, title, author, summary, lang)
++ List chunks (docId) - chunk index, chunk summary
++ Search doc summaries RAG - return matched docs id and their summary
++ Search chunk summaries RAG - return matched (docId, chunkIndex) and their summary
++ Search text - return matched (docId, chunkIndex)
++ Read chunk (docId, chunk Index)

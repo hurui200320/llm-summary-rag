@@ -1,12 +1,18 @@
-package info.skyblond
+package info.skyblond.runs
 
 import dev.langchain4j.data.message.SystemMessage
 import dev.langchain4j.data.message.UserMessage
 import dev.langchain4j.model.chat.request.ChatRequest
 import dev.langchain4j.model.openai.OpenAiChatModel
 import dev.langchain4j.model.output.FinishReason
+import info.skyblond.createBookSummarySystemPrompt
+import info.skyblond.database
+import info.skyblond.db.Chunks
+import info.skyblond.db.Documents
+import info.skyblond.openaiApiKey
 import org.ktorm.dsl.eq
 import org.ktorm.entity.*
+import org.ktorm.entity.sequenceOf
 
 private const val summaryLength = 1000
 private val backend by lazy {

@@ -1,6 +1,11 @@
-package info.skyblond
+package info.skyblond.runs
 
 import dev.langchain4j.model.googleai.BatchRequestResponse.*
+import info.skyblond.Gemini3
+import info.skyblond.database
+import info.skyblond.db.Chunks
+import info.skyblond.db.Documents
+import info.skyblond.generateChatRequest
 import org.ktorm.dsl.eq
 import org.ktorm.entity.*
 

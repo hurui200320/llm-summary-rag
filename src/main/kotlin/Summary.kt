@@ -3,6 +3,7 @@ package info.skyblond
 import dev.langchain4j.data.message.SystemMessage
 import dev.langchain4j.data.message.UserMessage
 import dev.langchain4j.model.chat.request.ChatRequest
+import info.skyblond.db.Chunk
 
 /**
  * Generate a Langchain4j [ChatRequest] for summary the given [chunk]

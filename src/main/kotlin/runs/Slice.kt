@@ -1,5 +1,9 @@
-package info.skyblond
+package info.skyblond.runs
 
+import info.skyblond.db.Chunk
+import info.skyblond.db.Chunks
+import info.skyblond.db.Documents
+import info.skyblond.database
 import org.ktorm.dsl.eq
 import org.ktorm.entity.add
 import org.ktorm.entity.find
@@ -48,7 +52,7 @@ fun main() {
         println(postContent)
         println("==================== END CHUNK ====================")
 
-        val chunk = Chunk {
+        val chunk = Chunk.Companion {
             this.indexOfDoc = index + 1 // start with 1
             this.preContent = preContent
             this.content = content

@@ -2,6 +2,7 @@ package info.skyblond
 
 import dev.langchain4j.model.googleai.*
 import dev.langchain4j.model.openai.OpenAiChatModel
+import info.skyblond.db.PgVectorSqlDialect
 import org.ktorm.database.Database
 
 val geminiApiKey by lazy {
@@ -107,5 +108,6 @@ val database = Database.connect(
     url = "jdbc:postgresql://localhost:5432/postgres",
     driver = "org.postgresql.Driver",
     user = "postgres",
-    password = "postgres"
+    password = "postgres",
+    dialect = PgVectorSqlDialect()
 )

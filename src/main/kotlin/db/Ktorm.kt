@@ -1,4 +1,4 @@
-package info.skyblond
+package info.skyblond.db
 
 import org.ktorm.entity.Entity
 import org.ktorm.schema.Table
@@ -45,4 +45,30 @@ object Chunks : Table<Chunk>("chunks") {
     val summary = text("summary").bindTo { it.summary }
 
     val documentId = int("document_id").references(Documents) { it.document }
+}
+
+interface ChunkSummaryVector : Entity<ChunkSummaryVector> {
+    companion object : Entity.Factory<ChunkSummaryVector>()
+
+    var chunk: Chunk
+    var embedding: List<Float>
+}
+
+object ChunkSummaryVectors : Table<ChunkSummaryVector>("chunk_summary_vectors") {
+    val chunkId = int("chunk_id").primaryKey()
+        .references(Chunks) { it.chunk }
+    val summary = vector("embedding").bindTo { it.embedding }
+}
+
+interface DocumentSummaryVector : Entity<DocumentSummaryVector> {
+    companion object : Entity.Factory<DocumentSummaryVector>()
+
+    var document: Document
+    var embedding: List<Float>
+}
+
+object DocumentSummaryVectors : Table<DocumentSummaryVector>("document_summary_vectors") {
+    val documentId = int("document_id").primaryKey()
+        .references(Documents) { it.document }
+    val summary = vector("embedding").bindTo { it.embedding }
 }

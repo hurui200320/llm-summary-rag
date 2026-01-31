@@ -1,7 +1,10 @@
-package info.skyblond
+package info.skyblond.runs
 
 import com.google.genai.Client
 import com.google.genai.types.GetBatchJobConfig
+import info.skyblond.database
+import info.skyblond.db.Chunks
+import info.skyblond.geminiApiKey
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.entity.find

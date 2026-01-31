@@ -1,7 +1,12 @@
-package info.skyblond
+package info.skyblond.runs
 
 import dev.langchain4j.model.openai.OpenAiChatModel
 import dev.langchain4j.model.output.FinishReason
+import info.skyblond.database
+import info.skyblond.db.Chunks
+import info.skyblond.db.Documents
+import info.skyblond.generateChatRequest
+import info.skyblond.openaiApiKey
 import org.ktorm.dsl.eq
 import org.ktorm.entity.*
 import java.util.concurrent.CompletableFuture
