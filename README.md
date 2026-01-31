@@ -75,7 +75,11 @@ However, we do want to do RAG for both chunk summary and book summary,
 providing tools to search RAG and return both matched books and chunks.
 Also providing search text using something like Apache Lucene.
 
-Re rank?
+Re rank? No, don't over optimize.
+
+For Lucene:
+  + SmartChineseAnalyser looks promissing, but can't handle simplified and traditional Chinese
+  + Replace with ICU tokenizer with N gram tokenizer
 
 Tools:
 + List docs (id, title, author, summary, lang)

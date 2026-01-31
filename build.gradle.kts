@@ -22,6 +22,11 @@ dependencies {
 
     implementation("com.google.genai:google-genai:1.36.0")
 
+    implementation("org.apache.lucene:lucene-core:10.3.2")
+    implementation("org.apache.lucene:lucene-queryparser:10.3.2")
+    implementation("org.apache.lucene:lucene-analysis-icu:10.3.2")
+    implementation("org.apache.lucene:lucene-analysis-common:10.3.2")
+
     testImplementation(kotlin("test"))
 }
 

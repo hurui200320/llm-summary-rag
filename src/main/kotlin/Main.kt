@@ -1,33 +1,55 @@
 package info.skyblond
 
-import com.google.genai.Client
-import info.skyblond.db.ChunkSummaryVectors
-import info.skyblond.db.Chunks
-import info.skyblond.db.Documents
-import info.skyblond.db.cosineDistance
-import org.ktorm.dsl.eq
-import org.ktorm.dsl.inList
-import org.ktorm.entity.*
+import dev.langchain4j.data.message.ToolExecutionResultMessage
+import dev.langchain4j.memory.chat.MessageWindowChatMemory
+import dev.langchain4j.model.openai.OpenAiChatModel
+import dev.langchain4j.service.AiServices
+import dev.langchain4j.service.tool.ToolErrorHandlerResult
+import org.slf4j.LoggerFactory
 
-private val client by lazy { Client.builder().apiKey(geminiApiKey).build() }
 
 fun main() {
-    val documents = database.sequenceOf(Documents).find { it.id eq 1 }!!
-    val chunks = database.sequenceOf(Chunks).filter { it.documentId eq 1 }
-    val chunkVectors = database.sequenceOf(ChunkSummaryVectors)
+    val logger = LoggerFactory.getLogger("Main")
 
-    val query = "佐伯沙弥香家里允许她在中学时带手机上学吗？"
-    println("Query: $query")
-    val queryEmbedding = queryEmbedding(client, query)
+    val model = OpenAiChatModel.builder()
+        .apiKey(openaiApiKey)
+        .baseUrl("https://openrouter.ai/api/v1")
+        .modelName("openai/gpt-5.2")
+        .reasoningEffort("high")
+        .temperature(0.8)
+        .topP(0.95)
+        .build()
 
-    val result = chunkVectors
-        .filter { vec -> vec.chunkId.inList(chunks.map { it.id })}
-        .sortedBy { it.summary.cosineDistance(queryEmbedding) }
-        .take(10)
+    val chatAgent = AiServices.builder(ChatAgent::class.java)
+        .chatModel(model)
+        .chatMemory(MessageWindowChatMemory.withMaxMessages(50))
+        .systemMessageProvider { ChatAgent.systemPrompt }
+        .tools(AgentTool)
+        .hallucinatedToolNameStrategy {
+            ToolExecutionResultMessage.from(
+                it,
+                "Error: tool ${it.name()} doesn't exist"
+            )
+        }
+        .toolArgumentsErrorHandler { throwable, context ->
+            logger.error("Failed to parse tool arguments", throwable)
+            ToolErrorHandlerResult.text(
+                "Failed to parse tool arguments: ${throwable.message}"
+            )
+        }
+        .build()
 
-    result.forEach {
-        println("cos distance = ${it.embedding.cosineDistance(queryEmbedding)}")
-        println(it.chunk.summary)
-    }
+    val response = chatAgent.chat("请问佐伯沙弥香中学时期是因为什么原因才有了自己的手机？")
+    println(response)
 }
 
+interface ChatAgent {
+    fun chat(input: String): String
+
+    companion object {
+        val systemPrompt = """
+            |你是一个读书助手，能够根据用户提供的问题，从数据库中检索相关文档，并提供答案。
+            |请务必调用工具来查询书籍或文档的内容，不要依靠本身的知识或幻觉回答用户。
+        """.trimMargin()
+    }
+}

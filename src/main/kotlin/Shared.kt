@@ -1,9 +1,13 @@
 package info.skyblond
 
+import com.google.genai.Client
 import dev.langchain4j.model.googleai.*
 import dev.langchain4j.model.openai.OpenAiChatModel
 import info.skyblond.db.PgVectorSqlDialect
+import org.apache.lucene.store.Directory
+import org.apache.lucene.store.FSDirectory
 import org.ktorm.database.Database
+import java.nio.file.Paths
 
 val geminiApiKey by lazy {
     System.getenv("GEMINI_API_KEY") ?: error("GEMINI_API_KEY is not set")
@@ -104,6 +108,8 @@ val openRouter by lazy {
         .build()
 }
 
+val geminiClient by lazy { Client.builder().apiKey(geminiApiKey).build() }
+
 val database = Database.connect(
     url = "jdbc:postgresql://localhost:5432/postgres",
     driver = "org.postgresql.Driver",
@@ -111,3 +117,5 @@ val database = Database.connect(
     password = "postgres",
     dialect = PgVectorSqlDialect()
 )
+
+val luceneDir: Directory = FSDirectory.open(Paths.get("./lucene-index"))
