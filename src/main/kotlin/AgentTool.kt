@@ -3,15 +3,10 @@ package info.skyblond
 import dev.langchain4j.agent.tool.P
 import dev.langchain4j.agent.tool.Tool
 import dev.langchain4j.model.output.structured.Description
-import info.skyblond.db.ChunkSummaryVectors
-import info.skyblond.db.Chunks
-import info.skyblond.db.DocumentSummaryVectors
-import info.skyblond.db.Documents
-import info.skyblond.db.cosineDistance
+import info.skyblond.db.*
+import info.skyblond.service.EmbeddingGenerator
+import info.skyblond.service.Lucene
 import org.apache.lucene.index.DirectoryReader
-import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.search.BooleanClause
-import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.ScoreDoc
 import org.ktorm.dsl.and
@@ -32,13 +27,7 @@ object AgentTool {
 
     private val luceneReader = DirectoryReader.open(luceneDir)
     private val luceneSearcher = IndexSearcher(luceneReader)
-    private val luceneAnalyzer = createAnalyzer()
-    private val luceneParser = QueryParser("content", luceneAnalyzer)
 
-    init {
-        // require all match due to N gram tokenization
-        luceneParser.defaultOperator = QueryParser.Operator.AND
-    }
 
     @Description("Document")
     data class DocumentResult(
@@ -49,19 +38,46 @@ object AgentTool {
         @Description("Document author")
         val author: String,
         @Description("Document language")
-        val language: String,
+        val language: String
+    )
+
+    @Tool("List all known documents in the database, returns only short metadata (summary not included)")
+    fun listDocumentMetadata(): List<DocumentResult> {
+        logger.info("List all documents' metadata")
+        return database.sequenceOf(Documents)
+            .sortedBy { it.id }
+            .map {
+                DocumentResult(it.id, it.title, it.author, it.language)
+            }
+    }
+
+    @Tool("Get document metadata by ids.")
+    fun getDocumentMetadata(
+        @P("A list of document ids") ids: List<Int>
+    ): List<DocumentResult> {
+        logger.info("Get document metadata for ids: $ids")
+        return ids.mapNotNull { id ->
+            database.sequenceOf(Documents).find { it.id eq id }
+        }.map {
+            DocumentResult(it.id, it.title, it.author, it.language)
+        }
+    }
+
+    @Description("Document summary")
+    data class DocumentSummary(
+        @Description("Document id")
+        val id: Int,
         @Description("Document summary")
         val summary: String,
     )
 
-    @Tool("List all known documents in the database")
-    fun listDocuments(): List<DocumentResult> {
-        logger.info("List all documents")
-        return database.sequenceOf(Documents)
-            .sortedBy { it.id }
-            .map {
-                DocumentResult(it.id, it.title, it.author, it.language, it.summary)
-            }
+    @Tool("Get document summary by ids. The summary provides an overview for the document. If the id doesn't exist, it will be ignored")
+    fun getDocumentSummary(
+        @P("A list of document ids") ids: List<Int>
+    ): List<DocumentSummary> {
+        logger.info("Get document summary for ids: $ids")
+        return ids.mapNotNull { id -> database.sequenceOf(Documents).find { it.id eq id } }
+            .map { DocumentSummary(it.id, it.summary) }
     }
 
     @Description("Chunk")
@@ -84,18 +100,15 @@ object AgentTool {
     }
 
     @Tool("Perform RAG (embedding) search on document summary")
-    fun searchDocSummaryRAG(query: String): List<DocumentResult> {
+    fun searchDocSummaryRAG(query: String): List<DocumentSummary> {
         logger.info("Search document summary with query '$query'")
-        val queryEmbedding = queryEmbedding(geminiClient, query)
+        val queryEmbedding = EmbeddingGenerator.queryEmbedding(geminiClient, query)
         val result = docSummaryVectors
             .sortedBy { it.summary.cosineDistance(queryEmbedding) }
-            .take(5)
+            .take(8)
         return result.map {
-            DocumentResult(
+            DocumentSummary(
                 it.document.id,
-                it.document.title,
-                it.document.author,
-                it.document.language,
                 it.document.summary
             )
         }
@@ -107,11 +120,11 @@ object AgentTool {
             ?: throw IllegalArgumentException("Invalid document id (not found)")
         val chunkIds = chunks.filter { it.documentId eq document.id }.map { it.id }
         logger.info("Search chunk summary with query '$query' in document #$docId")
-        val queryEmbedding = queryEmbedding(geminiClient, query)
+        val queryEmbedding = EmbeddingGenerator.queryEmbedding(geminiClient, query)
         val result = chunkSummaryVectors
-            .filter { vec -> vec.chunkId.inList(chunkIds)}
+            .filter { vec -> vec.chunkId.inList(chunkIds) }
             .sortedBy { it.summary.cosineDistance(queryEmbedding) }
-            .take(5)
+            .take(8)
         return result.map {
             ChunkResult(
                 it.chunk.indexOfDoc,
@@ -149,9 +162,9 @@ object AgentTool {
     fun searchKeywordAll(
         @P("Keywords, multiple keywords should be separated by space") keywords: String
     ): List<KeywordSearchResult> {
-        val luceneQuery = luceneParser.parse(keywords)
-        val hits = luceneSearcher.search(luceneQuery, 5)
-        logger.info("Found ${hits.totalHits} hits for keyword (all match): '$keywords'")
+        val words = keywords.trim().split("\\s+".toRegex())
+        val hits = Lucene.searchIndexAllMatch(words, luceneSearcher, 5)
+        logger.info("Found ${hits.totalHits} hits for keyword (all match): $words")
         return hits.scoreDocs.map {
             KeywordSearchResult.fromHit(it, luceneSearcher)
         }
@@ -162,22 +175,8 @@ object AgentTool {
         @P("Keywords, multiple keywords should be separated by space") keywords: String
     ): List<KeywordSearchResult> {
         val words = keywords.trim().split("\\s+".toRegex())
-        val queryBuilder = BooleanQuery.Builder()
-
-        words.forEach { word ->
-            // due to N-gram, we need to match all sub pairs in a keyword
-            // so the parser should still use AND operator
-            // but to allow OR, we use sub query:
-            // (AB and BC and CD) OR (EF and FG and GH)
-            // so this will match either ABCD or EFGH
-            queryBuilder.add(
-                luceneParser.parse(word),
-                BooleanClause.Occur.SHOULD
-            )
-        }
-        val luceneQuery = queryBuilder.build()
-        val hits = luceneSearcher.search(luceneQuery, 5)
-        logger.info("Found ${hits.totalHits} hits for keyword (any match): '$keywords'")
+        val hits = Lucene.searchIndexAnyMatch(words, luceneSearcher, 5)
+        logger.info("Found ${hits.totalHits} hits for keyword (any match): $words")
         return hits.scoreDocs.map {
             KeywordSearchResult.fromHit(it, luceneSearcher)
         }

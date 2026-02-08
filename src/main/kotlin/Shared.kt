@@ -75,37 +75,6 @@ object Gemini3 {
             .modelName("gemini-3-flash-preview")
             .build()
     }
-
-    val proBatch by lazy {
-        batchBuilder()
-            .modelName("gemini-3-pro-preview")
-            .build()
-    }
-
-    val embedding001 by lazy {
-        GoogleAiEmbeddingModel.builder()
-            .apiKey(geminiApiKey)
-            .modelName("gemini-embedding-001")
-            .build()
-    }
-}
-
-val geminiEmbedding001TokenEstimator by lazy {
-    GoogleAiGeminiTokenCountEstimator.builder()
-        .apiKey(geminiApiKey)
-        .modelName("gemini-embedding-001")
-        .build()
-}
-
-val openRouter by lazy {
-    OpenAiChatModel.builder()
-        .apiKey(openaiApiKey)
-        .baseUrl("https://openrouter.ai/api/v1")
-        .modelName("google/gemini-3-pro-preview")
-        .reasoningEffort("low")
-        .temperature(1.0)
-        .topP(0.95)
-        .build()
 }
 
 val geminiClient by lazy { Client.builder().apiKey(geminiApiKey).build() }
