@@ -12,7 +12,7 @@ fun main() {
     val logger = LoggerFactory.getLogger("Main")
 
     val model = OpenAiChatModel.builder()
-        .apiKey(openaiApiKey)
+        .apiKey(openRouterApiKey)
         .baseUrl("https://openrouter.ai/api/v1")
 //        .modelName("openai/gpt-5.2")
 //        .reasoningEffort("high")

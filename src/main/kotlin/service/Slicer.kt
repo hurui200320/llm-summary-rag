@@ -4,12 +4,10 @@ import info.skyblond.database
 import info.skyblond.db.Chunk
 import info.skyblond.db.Chunks
 import info.skyblond.db.Document
-import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.entity.add
 import org.ktorm.entity.any
 import org.ktorm.entity.filter
-import org.ktorm.entity.find
 import org.ktorm.entity.sequenceOf
 import org.slf4j.LoggerFactory
 

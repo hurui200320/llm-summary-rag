@@ -38,7 +38,7 @@ fun main() {
 
 
     val summaryBackend = OpenAiChatModel.builder()
-        .apiKey(openaiApiKey)
+        .apiKey(openRouterApiKey)
         .baseUrl("https://openrouter.ai/api/v1")
         .modelName("openai/gpt-5.1")
         .reasoningEffort("high")

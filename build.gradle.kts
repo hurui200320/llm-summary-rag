@@ -14,6 +14,7 @@ dependencies {
     implementation("dev.langchain4j:langchain4j-google-ai-gemini:1.10.0")
     implementation("dev.langchain4j:langchain4j-open-ai:1.10.0")
     implementation("dev.langchain4j:langchain4j:1.10.0")
+    implementation("ai.koog:koog-agents:0.6.4")
 
     implementation("org.ktorm:ktorm-core:4.1.1")
     implementation("org.ktorm:ktorm-support-postgresql:4.1.1")

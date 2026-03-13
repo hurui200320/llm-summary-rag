@@ -8,8 +8,6 @@ import org.apache.lucene.analysis.cjk.CJKBigramFilterFactory
 import org.apache.lucene.analysis.core.LowerCaseFilterFactory
 import org.apache.lucene.analysis.custom.CustomAnalyzer
 import org.apache.lucene.analysis.icu.ICUTransformFilterFactory
-import org.apache.lucene.analysis.icu.segmentation.ICUTokenizerFactory
-import org.apache.lucene.analysis.ngram.NGramFilterFactory
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
