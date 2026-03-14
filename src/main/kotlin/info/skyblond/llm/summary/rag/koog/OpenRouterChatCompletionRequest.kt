@@ -1,4 +1,4 @@
-package koog
+package info.skyblond.llm.summary.rag.koog
 
 import ai.koog.prompt.executor.clients.openai.base.models.*
 import ai.koog.prompt.executor.clients.openrouter.models.ProviderPreferences

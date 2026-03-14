@@ -1,9 +1,9 @@
-package info.skyblond.service
+package info.skyblond.llm.summary.rag.service
 
-import info.skyblond.database
-import info.skyblond.db.Chunk
-import info.skyblond.db.Chunks
-import info.skyblond.db.Document
+import info.skyblond.llm.summary.rag.database
+import info.skyblond.llm.summary.rag.db.Chunk
+import info.skyblond.llm.summary.rag.db.Chunks
+import info.skyblond.llm.summary.rag.db.Document
 import org.ktorm.dsl.eq
 import org.ktorm.entity.add
 import org.ktorm.entity.any

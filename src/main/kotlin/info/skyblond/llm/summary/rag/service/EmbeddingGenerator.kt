@@ -1,9 +1,14 @@
-package info.skyblond.service
+package info.skyblond.llm.summary.rag.service
 
 import com.google.genai.Client
 import com.google.genai.types.EmbedContentConfig
-import info.skyblond.database
-import info.skyblond.db.*
+import info.skyblond.llm.summary.rag.database
+import info.skyblond.llm.summary.rag.db.Chunk
+import info.skyblond.llm.summary.rag.db.ChunkSummaryVector
+import info.skyblond.llm.summary.rag.db.ChunkSummaryVectors
+import info.skyblond.llm.summary.rag.db.Document
+import info.skyblond.llm.summary.rag.db.DocumentSummaryVector
+import info.skyblond.llm.summary.rag.db.DocumentSummaryVectors
 import org.ktorm.dsl.eq
 import org.ktorm.entity.add
 import org.ktorm.entity.find

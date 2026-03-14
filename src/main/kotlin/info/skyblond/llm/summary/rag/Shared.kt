@@ -1,7 +1,10 @@
-package info.skyblond
+package info.skyblond.llm.summary.rag
 
+import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
+import ai.koog.prompt.llm.LLMProvider
 import com.google.genai.Client
-import info.skyblond.db.PgVectorSqlDialect
+import info.skyblond.llm.summary.rag.db.PgVectorSqlDialect
+import info.skyblond.llm.summary.rag.koog.OpenRouterLLMClient
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import org.ktorm.database.Database
@@ -33,6 +36,14 @@ val geminiApiKey by lazy {
 }
 val openRouterApiKey by lazy {
     getEnv("OPENAI_API_KEY") ?: error("OPENAI_API_KEY is not set")
+}
+
+val promptExecutor by lazy {
+    MultiLLMPromptExecutor(
+        llmClients = mapOf(
+            LLMProvider.OpenRouter to OpenRouterLLMClient(apiKey = openRouterApiKey)
+        )
+    )
 }
 
 val geminiClient: Client by lazy { Client.builder().apiKey(geminiApiKey).build() }

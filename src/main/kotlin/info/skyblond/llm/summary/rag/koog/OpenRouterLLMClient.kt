@@ -1,4 +1,4 @@
-package koog
+package info.skyblond.llm.summary.rag.koog
 
 import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt

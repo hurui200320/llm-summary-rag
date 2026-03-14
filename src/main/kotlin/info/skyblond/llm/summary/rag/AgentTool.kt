@@ -3,7 +3,10 @@ package info.skyblond
 import dev.langchain4j.agent.tool.P
 import dev.langchain4j.agent.tool.Tool
 import dev.langchain4j.model.output.structured.Description
-import info.skyblond.db.*
+import info.skyblond.llm.summary.rag.database
+import info.skyblond.llm.summary.rag.db.*
+import info.skyblond.llm.summary.rag.geminiClient
+import info.skyblond.llm.summary.rag.luceneDir
 import info.skyblond.service.EmbeddingGenerator
 import info.skyblond.service.Lucene
 import org.apache.lucene.index.DirectoryReader

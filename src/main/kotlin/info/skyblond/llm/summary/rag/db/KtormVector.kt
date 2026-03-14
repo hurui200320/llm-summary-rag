@@ -1,4 +1,4 @@
-package info.skyblond.db
+package info.skyblond.llm.summary.rag.db
 
 import org.ktorm.database.Database
 import org.ktorm.expression.ScalarExpression

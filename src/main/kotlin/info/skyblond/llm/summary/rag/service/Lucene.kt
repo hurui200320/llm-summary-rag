@@ -1,8 +1,8 @@
-package info.skyblond.service
+package info.skyblond.llm.summary.rag.service
 
-import info.skyblond.database
-import info.skyblond.db.Chunks
-import info.skyblond.db.Documents
+import info.skyblond.llm.summary.rag.database
+import info.skyblond.llm.summary.rag.db.Chunks
+import info.skyblond.llm.summary.rag.db.Documents
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.cjk.CJKBigramFilterFactory
 import org.apache.lucene.analysis.core.LowerCaseFilterFactory

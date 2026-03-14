@@ -1,14 +1,14 @@
-package info.skyblond.service
+package info.skyblond.llm.summary.rag.service
 
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.streaming.StreamFrame
-import info.skyblond.database
-import info.skyblond.db.Chunk
-import info.skyblond.db.Chunks
-import info.skyblond.db.Document
-import info.skyblond.promptExecutor
+import info.skyblond.llm.summary.rag.database
+import info.skyblond.llm.summary.rag.db.Chunk
+import info.skyblond.llm.summary.rag.db.Chunks
+import info.skyblond.llm.summary.rag.db.Document
+import info.skyblond.llm.summary.rag.promptExecutor
 import org.ktorm.dsl.eq
 import org.ktorm.entity.filter
 import org.ktorm.entity.joinToString

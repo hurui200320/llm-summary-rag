@@ -1,10 +1,11 @@
-package info.skyblond
+package info.skyblond.llm.summary.rag
 
 import dev.langchain4j.data.message.ToolExecutionResultMessage
 import dev.langchain4j.memory.chat.MessageWindowChatMemory
 import dev.langchain4j.model.openai.OpenAiChatModel
 import dev.langchain4j.service.AiServices
 import dev.langchain4j.service.tool.ToolErrorHandlerResult
+import info.skyblond.AgentTool
 import org.slf4j.LoggerFactory
 
 

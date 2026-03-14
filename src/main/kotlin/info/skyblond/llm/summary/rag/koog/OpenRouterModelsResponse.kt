@@ -1,4 +1,4 @@
-package koog
+package info.skyblond.llm.summary.rag.koog
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

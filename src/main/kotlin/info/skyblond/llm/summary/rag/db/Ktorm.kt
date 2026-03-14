@@ -1,4 +1,4 @@
-package info.skyblond.db
+package info.skyblond.llm.summary.rag.db
 
 import org.ktorm.entity.Entity
 import org.ktorm.schema.Table

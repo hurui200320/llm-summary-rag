@@ -1,17 +1,16 @@
-package info.skyblond
+package info.skyblond.llm.summary.rag
 
-import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
 import ai.koog.prompt.executor.clients.openrouter.OpenRouterParams
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
-import info.skyblond.db.Chunks
-import info.skyblond.db.Document
-import info.skyblond.db.Documents
-import info.skyblond.service.EmbeddingGenerator
-import info.skyblond.service.Lucene
-import info.skyblond.service.Slicer
-import info.skyblond.service.Summarizer
+import info.skyblond.llm.summary.rag.db.Chunks
+import info.skyblond.llm.summary.rag.db.Document
+import info.skyblond.llm.summary.rag.db.Documents
+import info.skyblond.llm.summary.rag.service.EmbeddingGenerator
+import info.skyblond.llm.summary.rag.service.Lucene
+import info.skyblond.llm.summary.rag.service.Slicer
+import info.skyblond.llm.summary.rag.service.Summarizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.joinAll
