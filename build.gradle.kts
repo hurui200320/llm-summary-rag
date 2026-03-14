@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.3.0"
+    kotlin("plugin.serialization") version "2.3.0"
 }
 
 group = "info.skyblond"
@@ -14,6 +15,8 @@ dependencies {
     implementation("dev.langchain4j:langchain4j-google-ai-gemini:1.10.0")
     implementation("dev.langchain4j:langchain4j-open-ai:1.10.0")
     implementation("dev.langchain4j:langchain4j:1.10.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
     implementation("ai.koog:koog-agents:0.6.4")
 
     implementation("org.ktorm:ktorm-core:4.1.1")

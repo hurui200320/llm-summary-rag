@@ -1,14 +1,14 @@
 package info.skyblond.service
 
-import dev.langchain4j.data.message.SystemMessage
-import dev.langchain4j.data.message.UserMessage
-import dev.langchain4j.model.chat.ChatModel
-import dev.langchain4j.model.chat.request.ChatRequest
-import dev.langchain4j.model.output.FinishReason
+import ai.koog.prompt.dsl.prompt
+import ai.koog.prompt.llm.LLModel
+import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.streaming.StreamFrame
 import info.skyblond.database
 import info.skyblond.db.Chunk
 import info.skyblond.db.Chunks
 import info.skyblond.db.Document
+import info.skyblond.promptExecutor
 import org.ktorm.dsl.eq
 import org.ktorm.entity.filter
 import org.ktorm.entity.joinToString
@@ -25,14 +25,16 @@ object Summarizer {
      *
      * The [chunk] must be pulled from the actual database.
      *
-     * @throws IllegalStateException if summary failed (model finish reason is not STOP)
+     * @throws IllegalStateException if summary failed (finish reason is not STOP)
      * */
-    fun summarizeChunk(model: ChatModel, chunk: Chunk, summaryLength: Int) {
-        val chatReq = ChatRequest.builder()
-            .messages(
-                SystemMessage(createChunkSummarySystemPrompt(summaryLength)),
-                UserMessage(
-                    """
+    suspend fun summarizeChunk(
+        model: LLModel, llmParams: LLMParams,
+        chunk: Chunk, summaryLength: Int
+    ) {
+        val prompt = prompt("chunk_summary", llmParams) {
+            system(createChunkSummarySystemPrompt(summaryLength))
+            user(
+                """
                         |<pre_context>
                         |${preprocessXML(chunk.preContent)}
                         |</pre_context>
@@ -43,19 +45,42 @@ object Summarizer {
                         |${preprocessXML(chunk.postContent)}
                         |</post_context>
                     """.trimMargin()
-                )
-            )
-            .build()
-        val resp = model.chat(chatReq)
-        if (resp.finishReason() != FinishReason.STOP) {
-            throw IllegalStateException(
-                "Summary failed for chunk #${chunk.indexOfDoc} in doc #${chunk.document.id}" +
-                        "(${chunk.document.title}). Finish reason: ${resp.finishReason()}"
             )
         }
-        logger.info("Summary for chunk #${chunk.indexOfDoc}: \n${resp.aiMessage().text()}")
-        chunk.summary = resp.aiMessage().text()
+
+        // Use StringBuffer for thread safety
+        val textBuffer = StringBuffer()
+        val reasoningBuffer = StringBuffer()
+        var finishReason: String? = null
+
+        // collect blocks until all frames are processed
+        promptExecutor.executeStreaming(prompt, model).collect { frame ->
+            when (frame) {
+                is StreamFrame.TextDelta -> textBuffer.append(frame.text)
+                is StreamFrame.ReasoningDelta -> reasoningBuffer.append(frame.text)
+                is StreamFrame.End -> finishReason = frame.finishReason
+                else -> {}
+            }
+        }
+
+        // Validate finish reason
+        if (finishReason?.lowercase() != "stop") {
+            throw IllegalStateException(
+                "Summary failed for chunk #${chunk.indexOfDoc} in doc #${chunk.document.id}" +
+                        "(${chunk.document.title}). Finish reason: $finishReason"
+            )
+        }
+
+        val summary = textBuffer.toString().trim()
+        chunk.summary = summary
         chunk.flushChanges()
+
+        // Print to console
+        logger.info("Summary for chunk #${chunk.indexOfDoc}: \n$summary")
+        val reasoning = reasoningBuffer.toString().trim()
+        if (reasoning.isNotEmpty()) {
+            logger.info("Reasoning for chunk #${chunk.indexOfDoc}: \n$reasoning")
+        }
     }
 
 
@@ -64,12 +89,11 @@ object Summarizer {
      *
      * The [document] must be pulled from the actual database.
      *
-     * @throws IllegalStateException if summary failed (model finish reason is not STOP)
+     * @throws IllegalStateException if summary failed (finish reason is not STOP)
      * */
-    fun summarizeDocument(
-        model: ChatModel,
-        document: Document,
-        summaryLength: Int
+    suspend fun summarizeDocument(
+        model: LLModel, llmParams: LLMParams,
+        document: Document, summaryLength: Int
     ) {
         val chunks = chunks
             .filter { it.documentId eq document.id }
@@ -85,24 +109,44 @@ object Summarizer {
             """.trimMargin()
         }.trim()
 
-        val chatRequest = ChatRequest.builder()
-            .messages(
-                SystemMessage(systemPrompt),
-                UserMessage(input)
-            )
-            .build()
+        val prompt = prompt("document_summary", llmParams) {
+            system(systemPrompt)
+            user(input)
+        }
 
-        val resp = model.chat(chatRequest)
-        if (resp.finishReason() != FinishReason.STOP) {
+        // Use StringBuffer for thread safety
+        val textBuffer = StringBuffer()
+        val reasoningBuffer = StringBuffer()
+        var finishReason: String? = null
+
+        // collect blocks until all frames are processed
+        promptExecutor.executeStreaming(prompt, model).collect { frame ->
+            when (frame) {
+                is StreamFrame.TextDelta -> textBuffer.append(frame.text)
+                is StreamFrame.ReasoningDelta -> reasoningBuffer.append(frame.text)
+                is StreamFrame.End -> finishReason = frame.finishReason
+                else -> {}
+            }
+        }
+
+        // Validate finish reason
+        if (finishReason?.lowercase() != "stop") {
             throw IllegalStateException(
                 "Summary failed for doc #${document.id}" +
-                        "(${document.title}). Finish reason: ${resp.finishReason()}"
+                        "(${document.title}). Finish reason: $finishReason"
             )
         }
 
-        logger.info("Summary for doc #${document.id}: \n${resp.aiMessage().text()}")
-        document.summary = resp.aiMessage().text()
+        val summary = textBuffer.toString().trim()
+        document.summary = summary
         document.flushChanges()
+
+        // Print to console
+        logger.info("Summary for doc #${document.id}: \n$summary")
+        val reasoning = reasoningBuffer.toString().trim()
+        if (reasoning.isNotEmpty()) {
+            logger.info("Reasoning for doc #${document.id}: \n$reasoning")
+        }
     }
 
     /**

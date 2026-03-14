@@ -1,7 +1,10 @@
 package info.skyblond
 
-import com.google.genai.Client
-import dev.langchain4j.model.openai.OpenAiChatModel
+import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
+import ai.koog.prompt.executor.clients.openrouter.OpenRouterParams
+import ai.koog.prompt.llm.LLMCapability
+import ai.koog.prompt.llm.LLMProvider
+import ai.koog.prompt.llm.LLModel
 import info.skyblond.db.Chunks
 import info.skyblond.db.Document
 import info.skyblond.db.Documents
@@ -9,15 +12,20 @@ import info.skyblond.service.EmbeddingGenerator
 import info.skyblond.service.Lucene
 import info.skyblond.service.Slicer
 import info.skyblond.service.Summarizer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.neq
 import org.ktorm.entity.*
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.concurrent.CompletableFuture
 
 
-fun main() {
+fun main() = runBlocking(Dispatchers.IO) {
     val document = Document {
         title = "終將成為妳 關於佐伯沙彌香 3"
         author = "入間 人間"
@@ -36,18 +44,26 @@ fun main() {
     val chunkSummaryLength = 500
     val documentSummaryLength = 1000
 
-
-    val summaryBackend = OpenAiChatModel.builder()
-        .apiKey(openRouterApiKey)
-        .baseUrl("https://openrouter.ai/api/v1")
-        .modelName("openai/gpt-5.1")
-        .reasoningEffort("high")
-        .temperature(0.4)
-        .topP(0.95)
-        .build()
-
-    val geminiClient = Client.builder().apiKey(geminiApiKey).build()
-
+    val summaryBackend = LLModel(
+        provider = LLMProvider.OpenRouter,
+        id = "openai/gpt-5.1",
+        capabilities = listOf(
+            LLMCapability.Temperature,
+            LLMCapability.Speculation,
+            LLMCapability.Completion,
+        ),
+        contextLength = 400_000,
+        maxOutputTokens = 128_000
+    )
+    val summaryParameters = OpenRouterParams(
+        temperature = 0.4,
+        topP = 0.95,
+        additionalProperties = mapOf(
+            "reasoning" to JsonObject(mapOf(
+                "effort" to JsonPrimitive("high")
+            ))
+        )
+    )
 
     val logger = LoggerFactory.getLogger("IngestDocument")
 
@@ -69,13 +85,13 @@ fun main() {
         .filter { it.summary eq "" }
         .sortedBy { it.indexOfDoc }
         .map {
-            CompletableFuture.runAsync {
-                Summarizer.summarizeChunk(summaryBackend, it, chunkSummaryLength)
+            async {
+                Summarizer.summarizeChunk(summaryBackend, summaryParameters, it, chunkSummaryLength)
             }
-        }.forEach { it.join() }
+        }.joinAll()
 
     logger.info("Generating document summary...")
-    Summarizer.summarizeDocument(summaryBackend, document, documentSummaryLength)
+    Summarizer.summarizeDocument(summaryBackend, summaryParameters, document, documentSummaryLength)
 
     logger.info("Generating chunk summary embedding vectors...")
     chunks
