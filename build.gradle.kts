@@ -14,7 +14,7 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.17")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
-    implementation("ai.koog:koog-agents:0.6.4")
+    implementation("ai.koog:koog-agents:0.8.0")
 
     implementation("org.ktorm:ktorm-core:4.1.1")
     implementation("org.ktorm:ktorm-support-postgresql:4.1.1")
