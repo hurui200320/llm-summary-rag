@@ -21,12 +21,17 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.9")
     implementation("com.pgvector:pgvector:0.1.6")
 
-    implementation("com.google.genai:google-genai:1.36.0")
+    implementation("com.google.genai:google-genai:1.51.0")
+
+    implementation("io.modelcontextprotocol:kotlin-sdk-server:0.11.1")
+    implementation("io.ktor:ktor-server-netty:3.4.2")
+
 
     implementation("org.apache.lucene:lucene-core:10.3.2")
     implementation("org.apache.lucene:lucene-queryparser:10.3.2")
     implementation("org.apache.lucene:lucene-analysis-icu:10.3.2")
     implementation("org.apache.lucene:lucene-analysis-common:10.3.2")
+    implementation("io.ktor:ktor-server-cors:3.4.2")
 
     testImplementation(kotlin("test"))
 }

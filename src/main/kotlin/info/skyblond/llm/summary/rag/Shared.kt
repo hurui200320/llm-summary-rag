@@ -1,10 +1,10 @@
 package info.skyblond.llm.summary.rag
 
+import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
 import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.llm.LLMProvider
 import com.google.genai.Client
 import info.skyblond.llm.summary.rag.db.PgVectorSqlDialect
-import info.skyblond.llm.summary.rag.koog.OpenRouterLLMClient
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import org.ktorm.database.Database
