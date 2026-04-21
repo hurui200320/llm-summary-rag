@@ -1,7 +1,9 @@
 package info.skyblond.llm.summary.rag
 
 import info.skyblond.llm.summary.rag.db.Documents
+import info.skyblond.llm.summary.rag.mcp.GetDocMetadataRequest
 import info.skyblond.llm.summary.rag.mcp.McpDocumentMetadata
+import info.skyblond.llm.summary.rag.mcp.jsonSchema
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -17,6 +19,7 @@ import org.ktorm.entity.find
 import org.ktorm.entity.map
 import org.ktorm.entity.sequenceOf
 import org.ktorm.entity.sortedBy
+
 
 fun main() {
     val mcpServer = Server(
@@ -38,16 +41,6 @@ fun main() {
             properties = buildJsonObject { }
         )
     ) { _ ->
-        CallToolResult(content = listOf(TextContent("world")))
-    }
-
-    mcpServer.addTool(
-        name = "list_documents",
-        description = "List all known documents in the database, returns only short metadata (summary not included)",
-        inputSchema = ToolSchema(
-            properties = buildJsonObject { }
-        )
-    ) { _ ->
         val docs = database.sequenceOf(Documents)
             .sortedBy { it.id }
             .map { McpDocumentMetadata(it.id, it.title, it.author, it.language) }
@@ -58,12 +51,14 @@ fun main() {
         name = "get_doc_metadata",
         description = "Get document metadata by ids.",
         inputSchema = ToolSchema(
-            properties = buildJsonObject {
-                putJsonObject("ids") {
-                    put("type", "array")
-                    putJsonObject("items") { put("type", "integer") }
-                }
-            }
+            properties = GetDocMetadataRequest::class.jsonSchema["properties"]!!.jsonObject,
+            required = GetDocMetadataRequest::class.jsonSchema["required"]!!.jsonArray.map { it.jsonPrimitive.content },
+        ),
+        toolAnnotations = ToolAnnotations(
+            readOnlyHint = true,
+            destructiveHint = false,
+            idempotentHint = true,
+            openWorldHint = false
         )
     ) { request ->
         val ids = request.arguments?.get("ids")?.let { element ->
@@ -80,7 +75,6 @@ fun main() {
 
         CallToolResult(content = listOf(TextContent(Json.encodeToString(docs))))
     }
-
 
 
     println("Starting MCP server on port 3000...")
