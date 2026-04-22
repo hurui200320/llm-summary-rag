@@ -37,6 +37,17 @@ class ToolSchemaBuilder {
         if (required) requiredFields.add(name)
     }
 
+    fun arrayStringParam(name: String, description: String, required: Boolean = true) {
+        properties[name] = buildJsonObject {
+            put("type", "array")
+            putJsonObject("items") {
+                put("type", "string")
+            }
+            put("description", description)
+        }
+        if (required) requiredFields.add(name)
+    }
+
     fun build(): ToolSchema {
         return ToolSchema(
             properties = buildJsonObject {

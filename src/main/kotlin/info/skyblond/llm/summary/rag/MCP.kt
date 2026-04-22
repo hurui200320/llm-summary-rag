@@ -2,6 +2,7 @@ package info.skyblond.llm.summary.rag
 
 import info.skyblond.llm.summary.rag.db.*
 import info.skyblond.llm.summary.rag.mcp.*
+import info.skyblond.llm.summary.rag.mcp.McpKeywordSearchResult.Companion.toResultList
 import info.skyblond.llm.summary.rag.service.EmbeddingGenerator
 import info.skyblond.llm.summary.rag.service.Lucene
 import io.ktor.http.*
@@ -168,23 +169,20 @@ fun main() {
         name = "search_kw_all",
         description = "Do a lucene-backed keyword search on raw chunk content, require all keywords match",
         inputSchema = toolSchema {
-            stringParam("keywords", "Keywords, multiple keywords should be separated by space")
+            arrayStringParam("keywords", "A list of keywords")
         },
         toolAnnotations = defaultToolHint
     ) { request ->
-        val keywords = request.arguments?.get("keywords")?.jsonPrimitive?.content ?: ""
+        val keywords = request.arguments?.get("keywords")?.let { element ->
+            if (element is JsonArray) {
+                element.map { it.jsonPrimitive.content }
+            } else {
+                emptyList()
+            }
+        } ?: emptyList()
         logger.info("Keyword search (all match) for: $keywords")
-        val words = keywords.trim().split("\\s+".toRegex())
-        val hits = Lucene.searchIndexAllMatch(words, luceneSearcher, 5)
-        val results = hits.scoreDocs.map { hit ->
-            val doc = luceneSearcher.storedFields().document(hit.doc)
-            McpKeywordSearchResult(
-                docId = doc.get("documentId")!!.toInt(),
-                chunkIndex = doc.get("chunkIndex")!!.toInt(),
-                score = hit.score,
-                content = doc.get("content")!!
-            )
-        }
+        val hits = Lucene.searchIndexAllMatch(keywords, luceneSearcher, 5)
+        val results = hits.toResultList(luceneSearcher)
         CallToolResult(content = listOf(TextContent(Json.encodeToString(results))))
     }
 
@@ -192,23 +190,20 @@ fun main() {
         name = "search_kw_any",
         description = "Do a lucene-backed keyword search on raw chunk content, allow any keywords match",
         inputSchema = toolSchema {
-            stringParam("keywords", "Keywords, multiple keywords should be separated by space")
+            arrayStringParam("keywords", "A list of keywords")
         },
         toolAnnotations = defaultToolHint
     ) { request ->
-        val keywords = request.arguments?.get("keywords")?.jsonPrimitive?.content ?: ""
+        val keywords = request.arguments?.get("keywords")?.let { element ->
+            if (element is JsonArray) {
+                element.map { it.jsonPrimitive.content }
+            } else {
+                emptyList()
+            }
+        } ?: emptyList()
         logger.info("Keyword search (any match) for: $keywords")
-        val words = keywords.trim().split("\\s+".toRegex())
-        val hits = Lucene.searchIndexAnyMatch(words, luceneSearcher, 5)
-        val results = hits.scoreDocs.map { hit ->
-            val doc = luceneSearcher.storedFields().document(hit.doc)
-            McpKeywordSearchResult(
-                docId = doc.get("documentId")!!.toInt(),
-                chunkIndex = doc.get("chunkIndex")!!.toInt(),
-                score = hit.score,
-                content = doc.get("content")!!
-            )
-        }
+        val hits = Lucene.searchIndexAnyMatch(keywords, luceneSearcher, 5)
+        val results = hits.toResultList(luceneSearcher)
         CallToolResult(content = listOf(TextContent(Json.encodeToString(results))))
     }
 
