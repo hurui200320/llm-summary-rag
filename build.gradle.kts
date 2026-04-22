@@ -1,7 +1,6 @@
 plugins {
     kotlin("jvm") version "2.3.20"
     kotlin("plugin.serialization") version "2.3.20"
-    id("com.google.devtools.ksp") version "2.3.6"
 }
 
 group = "info.skyblond"
@@ -34,9 +33,6 @@ dependencies {
     implementation("org.apache.lucene:lucene-analysis-common:10.3.2")
     implementation("io.ktor:ktor-server-cors:3.4.2")
 
-    ksp("org.jetbrains.kotlinx:kotlinx-schema-ksp:0.5.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-schema-annotations:0.5.0")
-
     testImplementation(kotlin("test"))
 
 }
@@ -47,17 +43,4 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
-}
-
-sourceSets {
-    main {
-        kotlin {
-            srcDir("build/generated/ksp/main/kotlin")
-        }
-    }
-}
-
-ksp {
-    arg("kotlinx.schema.withSchemaObject", "true")
-    arg("kotlinx.schema.rootPackage", "info.skyblond.llm.summary.rag")
 }

@@ -1,31 +1,28 @@
 package info.skyblond.llm.summary.rag
 
+import info.skyblond.llm.summary.rag.db.*
+import info.skyblond.llm.summary.rag.mcp.*
+import info.skyblond.llm.summary.rag.service.EmbeddingGenerator
+import info.skyblond.llm.summary.rag.service.Lucene
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.cors.routing.*
-import info.skyblond.llm.summary.rag.db.*
-import info.skyblond.llm.summary.rag.mcp.*
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
 import io.modelcontextprotocol.kotlin.sdk.server.mcpStreamableHttp
 import io.modelcontextprotocol.kotlin.sdk.types.*
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.*
-import info.skyblond.llm.summary.rag.service.EmbeddingGenerator
-import info.skyblond.llm.summary.rag.service.Lucene
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.IndexSearcher
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.inList
-import org.ktorm.entity.filter
-import org.ktorm.entity.find
-import org.ktorm.entity.map
-import org.ktorm.entity.sequenceOf
-import org.ktorm.entity.sortedBy
-import org.ktorm.entity.take
+import org.ktorm.entity.*
 
 fun main() {
     val luceneReader = DirectoryReader.open(luceneDir)
@@ -43,12 +40,18 @@ fun main() {
         )
     )
 
+    val defaultToolHint = ToolAnnotations(
+        readOnlyHint = true,
+        destructiveHint = false,
+        idempotentHint = true,
+        openWorldHint = false
+    )
+
     mcpServer.addTool(
         name = "list_documents",
         description = "List all known documents in the database, returns only short metadata (summary not included)",
-        inputSchema = ToolSchema(
-            properties = buildJsonObject { }
-        )
+        inputSchema = toolSchema { },
+        toolAnnotations = defaultToolHint
     ) { _ ->
         val docs = database.sequenceOf(Documents)
             .sortedBy { it.id }
@@ -59,16 +62,10 @@ fun main() {
     mcpServer.addTool(
         name = "get_doc_metadata",
         description = "Get document metadata by ids.",
-        inputSchema = ToolSchema(
-            properties = GetDocMetadataRequest::class.jsonSchema["properties"]!!.jsonObject,
-            required = GetDocMetadataRequest::class.jsonSchema["required"]!!.jsonArray.map { it.jsonPrimitive.content },
-        ),
-        toolAnnotations = ToolAnnotations(
-            readOnlyHint = true,
-            destructiveHint = false,
-            idempotentHint = true,
-            openWorldHint = false
-        )
+        inputSchema = toolSchema {
+            arrayIntParam("ids", "A list of document ids")
+        },
+        toolAnnotations = defaultToolHint
     ) { request ->
         val ids = request.arguments?.get("ids")?.let { element ->
             if (element is JsonArray) {
@@ -77,21 +74,21 @@ fun main() {
                 emptyList()
             }
         } ?: emptyList()
-        
+
         val docs = ids.mapNotNull { id ->
             database.sequenceOf(Documents).find { it.id eq id }
         }.map { McpDocumentMetadata(it.id, it.title, it.author, it.language) }
-        
+
         CallToolResult(content = listOf(TextContent(Json.encodeToString(docs))))
     }
 
     mcpServer.addTool(
         name = "get_doc_summary",
         description = "Get document summary by ids. The summary provides an overview for the document.",
-        inputSchema = ToolSchema(
-            properties = GetDocSummaryRequest::class.jsonSchema["properties"]!!.jsonObject,
-            required = GetDocSummaryRequest::class.jsonSchema["required"]!!.jsonArray.map { it.jsonPrimitive.content },
-        )
+        inputSchema = toolSchema {
+            arrayIntParam("ids", "A list of document ids")
+        },
+        toolAnnotations = defaultToolHint
     ) { request ->
         val ids = request.arguments?.get("ids")?.let { element ->
             if (element is JsonArray) {
@@ -108,10 +105,10 @@ fun main() {
     mcpServer.addTool(
         name = "list_chunks",
         description = "List all chunks (index and summary) in a document",
-        inputSchema = ToolSchema(
-            properties = ListChunksRequest::class.jsonSchema["properties"]!!.jsonObject,
-            required = ListChunksRequest::class.jsonSchema["required"]!!.jsonArray.map { it.jsonPrimitive.content },
-        )
+        inputSchema = toolSchema {
+            intParam("docId", "Document id")
+        },
+        toolAnnotations = defaultToolHint
     ) { request ->
         val docId = request.arguments?.get("docId")?.jsonPrimitive?.int ?: -1
         val chunks = database.sequenceOf(Chunks)
@@ -124,10 +121,10 @@ fun main() {
     mcpServer.addTool(
         name = "search_docs_rag",
         description = "Perform RAG (embedding) search on document summary",
-        inputSchema = ToolSchema(
-            properties = SearchDocsRagRequest::class.jsonSchema["properties"]!!.jsonObject,
-            required = SearchDocsRagRequest::class.jsonSchema["required"]!!.jsonArray.map { it.jsonPrimitive.content },
-        )
+        inputSchema = toolSchema {
+            stringParam("query", "Search query")
+        },
+        toolAnnotations = defaultToolHint
     ) { request ->
         val query = request.arguments?.get("query")?.jsonPrimitive?.content ?: ""
         val queryEmbedding = EmbeddingGenerator.queryEmbedding(geminiClient, query)
@@ -141,10 +138,11 @@ fun main() {
     mcpServer.addTool(
         name = "search_chunks_rag",
         description = "Perform RAG (embedding) search on chunk summary",
-        inputSchema = ToolSchema(
-            properties = SearchChunksRagRequest::class.jsonSchema["properties"]!!.jsonObject,
-            required = SearchChunksRagRequest::class.jsonSchema["required"]!!.jsonArray.map { it.jsonPrimitive.content },
-        )
+        inputSchema = toolSchema {
+            intParam("docId", "Document id")
+            stringParam("query", "Search query")
+        },
+        toolAnnotations = defaultToolHint
     ) { request ->
         val docId = request.arguments?.get("docId")?.jsonPrimitive?.int ?: -1
         val query = request.arguments?.get("query")?.jsonPrimitive?.content ?: ""
@@ -161,10 +159,10 @@ fun main() {
     mcpServer.addTool(
         name = "search_kw_all",
         description = "Do a lucene-backed keyword search on raw chunk content, require all keywords match",
-        inputSchema = ToolSchema(
-            properties = SearchKwAllRequest::class.jsonSchema["properties"]!!.jsonObject,
-            required = SearchKwAllRequest::class.jsonSchema["required"]!!.jsonArray.map { it.jsonPrimitive.content },
-        )
+        inputSchema = toolSchema {
+            stringParam("keywords", "Keywords, multiple keywords should be separated by space")
+        },
+        toolAnnotations = defaultToolHint
     ) { request ->
         val keywords = request.arguments?.get("keywords")?.jsonPrimitive?.content ?: ""
         val words = keywords.trim().split("\\s+".toRegex())
@@ -184,10 +182,10 @@ fun main() {
     mcpServer.addTool(
         name = "search_kw_any",
         description = "Do a lucene-backed keyword search on raw chunk content, allow any keywords match",
-        inputSchema = ToolSchema(
-            properties = SearchKwAnyRequest::class.jsonSchema["properties"]!!.jsonObject,
-            required = SearchKwAnyRequest::class.jsonSchema["required"]!!.jsonArray.map { it.jsonPrimitive.content },
-        )
+        inputSchema = toolSchema {
+            stringParam("keywords", "Keywords, multiple keywords should be separated by space")
+        },
+        toolAnnotations = defaultToolHint
     ) { request ->
         val keywords = request.arguments?.get("keywords")?.jsonPrimitive?.content ?: ""
         val words = keywords.trim().split("\\s+".toRegex())
@@ -207,10 +205,11 @@ fun main() {
     mcpServer.addTool(
         name = "read_chunk",
         description = "Read a chunk, returning the content",
-        inputSchema = ToolSchema(
-            properties = ReadChunkRequest::class.jsonSchema["properties"]!!.jsonObject,
-            required = ReadChunkRequest::class.jsonSchema["required"]!!.jsonArray.map { it.jsonPrimitive.content },
-        )
+        inputSchema = toolSchema {
+            intParam("docId", "Document id")
+            intParam("chunkIndex", "Chunk index, start from 1")
+        },
+        toolAnnotations = defaultToolHint
     ) { request ->
         val docId = request.arguments?.get("docId")?.jsonPrimitive?.int ?: -1
         val chunkIdx = request.arguments?.get("chunkIndex")?.jsonPrimitive?.int ?: -1
