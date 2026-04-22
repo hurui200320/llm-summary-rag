@@ -132,7 +132,7 @@ class AgentTool : ToolSet {
         @LLMDescription("Document id") docId: Int,
         @LLMDescription("Search query") query: String
     ): List<ChunkResult> {
-        val document = database.sequenceOf(Documents).find { it.id eq 1 }
+        val document = database.sequenceOf(Documents).find { it.id eq docId }
             ?: throw IllegalArgumentException("Invalid document id (not found)")
         val chunkIds = chunks.filter { it.documentId eq document.id }.map { it.id }
         logger.info("Search chunk summary with query '$query' in document #$docId")
