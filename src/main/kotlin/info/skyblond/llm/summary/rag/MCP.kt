@@ -23,8 +23,10 @@ import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.inList
 import org.ktorm.entity.*
+import org.slf4j.LoggerFactory
 
 fun main() {
+    val logger = LoggerFactory.getLogger("MCP")
     val luceneReader = DirectoryReader.open(luceneDir)
     val luceneSearcher = IndexSearcher(luceneReader)
 
@@ -53,6 +55,7 @@ fun main() {
         inputSchema = toolSchema { },
         toolAnnotations = defaultToolHint
     ) { _ ->
+        logger.info("List all documents' metadata")
         val docs = database.sequenceOf(Documents)
             .sortedBy { it.id }
             .map { McpDocumentMetadata(it.id, it.title, it.author, it.language) }
@@ -74,6 +77,7 @@ fun main() {
                 emptyList()
             }
         } ?: emptyList()
+        logger.info("Get document metadata for ids: $ids")
 
         val docs = ids.mapNotNull { id ->
             database.sequenceOf(Documents).find { it.id eq id }
@@ -97,6 +101,7 @@ fun main() {
                 emptyList()
             }
         } ?: emptyList()
+        logger.info("Get document summary for ids: $ids")
         val docs = ids.mapNotNull { id -> database.sequenceOf(Documents).find { it.id eq id } }
             .map { McpDocumentSummary(it.id, it.summary) }
         CallToolResult(content = listOf(TextContent(Json.encodeToString(docs))))
@@ -111,6 +116,7 @@ fun main() {
         toolAnnotations = defaultToolHint
     ) { request ->
         val docId = request.arguments?.get("docId")?.jsonPrimitive?.int ?: -1
+        logger.info("List all chunks in document #$docId")
         val chunks = database.sequenceOf(Chunks)
             .filter { it.documentId eq docId }
             .sortedBy { it.indexOfDoc }
@@ -127,6 +133,7 @@ fun main() {
         toolAnnotations = defaultToolHint
     ) { request ->
         val query = request.arguments?.get("query")?.jsonPrimitive?.content ?: ""
+        logger.info("Search document summary with query '$query'")
         val queryEmbedding = EmbeddingGenerator.queryEmbedding(geminiClient, query)
         val result = database.sequenceOf(DocumentSummaryVectors)
             .sortedBy { it.summary.cosineDistance(queryEmbedding) }
@@ -146,6 +153,7 @@ fun main() {
     ) { request ->
         val docId = request.arguments?.get("docId")?.jsonPrimitive?.int ?: -1
         val query = request.arguments?.get("query")?.jsonPrimitive?.content ?: ""
+        logger.info("Search chunk summary with query '$query' in document #$docId")
         val queryEmbedding = EmbeddingGenerator.queryEmbedding(geminiClient, query)
         val chunkIds = database.sequenceOf(Chunks).filter { it.documentId eq docId }.map { it.id }
         val result = database.sequenceOf(ChunkSummaryVectors)
@@ -165,6 +173,7 @@ fun main() {
         toolAnnotations = defaultToolHint
     ) { request ->
         val keywords = request.arguments?.get("keywords")?.jsonPrimitive?.content ?: ""
+        logger.info("Keyword search (all match) for: $keywords")
         val words = keywords.trim().split("\\s+".toRegex())
         val hits = Lucene.searchIndexAllMatch(words, luceneSearcher, 5)
         val results = hits.scoreDocs.map { hit ->
@@ -188,6 +197,7 @@ fun main() {
         toolAnnotations = defaultToolHint
     ) { request ->
         val keywords = request.arguments?.get("keywords")?.jsonPrimitive?.content ?: ""
+        logger.info("Keyword search (any match) for: $keywords")
         val words = keywords.trim().split("\\s+".toRegex())
         val hits = Lucene.searchIndexAnyMatch(words, luceneSearcher, 5)
         val results = hits.scoreDocs.map { hit ->
@@ -213,6 +223,7 @@ fun main() {
     ) { request ->
         val docId = request.arguments?.get("docId")?.jsonPrimitive?.int ?: -1
         val chunkIdx = request.arguments?.get("chunkIndex")?.jsonPrimitive?.int ?: -1
+        logger.info("Read chunk $docId:$chunkIdx")
         val result = database.sequenceOf(Chunks)
             .find { (it.documentId eq docId) and (it.indexOfDoc eq chunkIdx) }
         CallToolResult(content = listOf(TextContent(result?.content ?: "Chunk not found")))

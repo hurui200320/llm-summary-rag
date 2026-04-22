@@ -12,26 +12,29 @@ repositories {
 
 dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.17")
-
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
+
     implementation("ai.koog:koog-agents:0.8.0")
 
+    // ktorm and pgsql and pgvector
     implementation("org.ktorm:ktorm-core:4.1.1")
     implementation("org.ktorm:ktorm-support-postgresql:4.1.1")
     implementation("org.postgresql:postgresql:42.7.9")
     implementation("com.pgvector:pgvector:0.1.6")
 
+    // Google's sdk, for embedding
     implementation("com.google.genai:google-genai:1.51.0")
 
+    // mcp server and ktor engine
     implementation("io.modelcontextprotocol:kotlin-sdk-server:0.11.1")
     implementation("io.ktor:ktor-server-netty:3.4.2")
+    implementation("io.ktor:ktor-server-cors:3.4.2")
 
-
+    // lucene index
     implementation("org.apache.lucene:lucene-core:10.3.2")
     implementation("org.apache.lucene:lucene-queryparser:10.3.2")
     implementation("org.apache.lucene:lucene-analysis-icu:10.3.2")
     implementation("org.apache.lucene:lucene-analysis-common:10.3.2")
-    implementation("io.ktor:ktor-server-cors:3.4.2")
 
     testImplementation(kotlin("test"))
 
